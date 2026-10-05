@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Copy, Check, Share2, MessageCircle, Download, FileText } from "lucide-react";
+import { X, Copy, Check, Share2, MessageCircle, Download } from "lucide-react";
 
 export default function ShareTripModal({ isOpen, onClose, trip }) {
   const [copied, setCopied] = useState(false);
@@ -12,10 +12,39 @@ export default function ShareTripModal({ isOpen, onClose, trip }) {
     `💰 Estimated Budget: ₹${(trip.estimatedCost || trip.budget).toLocaleString("en-IN")}\n` +
     `🔗 Plan yours: ${shareUrl}`;
 
+  const legacyCopy = (text) => {
+    const field = document.createElement("textarea");
+    field.value = text;
+    field.setAttribute("readonly", "");
+    field.style.position = "fixed";
+    field.style.opacity = "0";
+    document.body.appendChild(field);
+    field.select();
+    try {
+      document.execCommand("copy");
+    } catch {
+      /* clipboard unavailable — nothing else to do */
+    }
+    document.body.removeChild(field);
+  };
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const onCopied = () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+
+    // The async Clipboard API is unavailable on non-secure origins, so fall
+    // back to execCommand rather than throwing an unhandled rejection.
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareUrl).then(onCopied).catch(() => {
+        legacyCopy(shareUrl);
+        onCopied();
+      });
+    } else {
+      legacyCopy(shareUrl);
+      onCopied();
+    }
   };
 
   const handleWhatsApp = () => {
@@ -46,7 +75,10 @@ export default function ShareTripModal({ isOpen, onClose, trip }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
       <div
         className="bg-white rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl border border-stone-200 relative animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}

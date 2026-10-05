@@ -64,6 +64,49 @@ export function TripProvider({ children }) {
     setPlannerForm((prev) => ({ ...prev, ...fields }));
   };
 
+  /**
+   * Seeds the planner form from an existing trip so "Edit Trip" reopens that
+   * exact trip instead of an empty default plan.
+   */
+  const loadTripIntoPlanner = (trip) => {
+    if (!trip) return;
+    setPlannerForm((prev) => ({
+      ...prev,
+      startingLocation: trip.startingLocation || prev.startingLocation,
+      destination: trip.destination || prev.destination,
+      days: Number(trip.days) > 0 ? Number(trip.days) : prev.days,
+      travelers: Number(trip.travelers) > 0 ? Number(trip.travelers) : prev.travelers,
+      travelDates: trip.travelDates || trip.dates || prev.travelDates,
+      travelStyle: trip.travelStyle || prev.travelStyle,
+      interests:
+        Array.isArray(trip.interests) && trip.interests.length > 0
+          ? trip.interests
+          : prev.interests,
+      foodPreference: trip.foodPreference || prev.foodPreference,
+      stayPreference: trip.stayPreference || prev.stayPreference,
+      totalBudget: Number(trip.budget) > 0 ? Number(trip.budget) : prev.totalBudget
+    }));
+  };
+
+  /**
+   * Updates the plan currently open on /results. Also persists it when that
+   * plan has already been saved, so itinerary edits are never dropped.
+   */
+  const updateCurrentPlan = (updates) => {
+    if (!currentPlan) return;
+    const next = { ...currentPlan, ...updates };
+    setCurrentPlan(next);
+
+    if (next.id) {
+      const trips = getStoredTrips();
+      if (trips.some((t) => t.id === next.id)) {
+        const updated = trips.map((t) => (t.id === next.id ? next : t));
+        localStorage.setItem("tripsathi_saved_trips", JSON.stringify(updated));
+        setSavedTrips(updated);
+      }
+    }
+  };
+
   const toggleBookmark = (id) => {
     setBookmarks((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
@@ -97,6 +140,10 @@ export function TripProvider({ children }) {
     } catch (err) {
       console.error("Error generating trip plan:", err);
       setIsGenerating(false);
+      setGenerationStep(0);
+      // Always notify the caller so navigation still happens with fallback data.
+      if (onComplete) onComplete(null);
+      return null;
     }
   };
 
@@ -127,8 +174,10 @@ export function TripProvider({ children }) {
         savedTrips,
         currentPlan,
         setCurrentPlan,
+        updateCurrentPlan,
         plannerForm,
         updatePlannerForm,
+        loadTripIntoPlanner,
         isGenerating,
         generationStep,
         executeTripGeneration,

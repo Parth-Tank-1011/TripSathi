@@ -33,7 +33,7 @@ export default function AboutPage() {
       </div>
 
       {/* The Sathi Core Values */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div id="transparency" className="grid grid-cols-1 md:grid-cols-3 gap-6 scroll-mt-24">
         
         <div className="bg-white p-7 rounded-3xl border border-stone-200/90 shadow-xs space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold">
@@ -68,7 +68,7 @@ export default function AboutPage() {
       </div>
 
       {/* How Our Indian Budget Calculator Works */}
-      <div className="bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 text-white p-8 md:p-12 rounded-4xl space-y-8 shadow-xl">
+      <div id="budget-philosophy" className="bg-gradient-to-br from-teal-900 via-slate-900 to-teal-950 text-white p-8 md:p-12 rounded-4xl space-y-8 shadow-xl scroll-mt-24">
         <div className="max-w-2xl space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-teal-300">
             Transparent Travel Economics
@@ -117,7 +117,7 @@ export default function AboutPage() {
       </div>
 
       {/* Backend Integration Note */}
-      <div className="bg-stone-50 p-6 md:p-8 rounded-3xl border border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div id="backend-architecture" className="bg-stone-50 p-6 md:p-8 rounded-3xl border border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-6 scroll-mt-24">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center shrink-0">
             <Cpu className="w-6 h-6" />

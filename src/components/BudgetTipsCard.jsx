@@ -1,7 +1,9 @@
 import React from "react";
-import { Lightbulb, PiggyBank, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Lightbulb, PiggyBank, ArrowRight } from "lucide-react";
 
 export default function BudgetTipsCard({ tips = [] }) {
+  const navigate = useNavigate();
   const defaultTips = [
     {
       id: "tip1",
@@ -83,10 +85,14 @@ export default function BudgetTipsCard({ tips = [] }) {
               </p>
             </div>
 
-            <div className="pt-3 mt-3 border-t border-stone-100 flex items-center text-xs font-bold text-teal-700 hover:text-teal-900 cursor-pointer">
+            <button
+              type="button"
+              onClick={() => navigate("/planner?step=3")}
+              className="w-full pt-3 mt-3 border-t border-stone-100 flex items-center text-xs font-bold text-teal-700 hover:text-teal-900 cursor-pointer"
+            >
               <span>Apply this hack</span>
               <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </div>
+            </button>
           </div>
         ))}
       </div>

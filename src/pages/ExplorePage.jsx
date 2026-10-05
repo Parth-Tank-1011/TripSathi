@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from "react";
+import { useSearchParams, useLocation } from "react-router-dom";
 import {
   Search,
   Compass,
@@ -10,6 +10,7 @@ import DestinationCard from "../components/DestinationCard";
 
 export default function ExplorePage() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const initialCategory = searchParams.get("category") || "All";
   const initialSearch = searchParams.get("search") || "";
@@ -19,6 +20,23 @@ export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [maxBudget, setMaxBudget] = useState(15000);
   const [selectedRegion, setSelectedRegion] = useState("All");
+
+  // Keep filters in sync with the URL so deep links from the footer, landing page
+  // and destination cards always land on the matching results — even when the
+  // user is already on /explore and the component is not remounted.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const category = params.get("category");
+    const search = params.get("search");
+    const dest = params.get("dest");
+
+    if (category === null && search === null && dest === null) return;
+
+    setSelectedCategory(category || "All");
+    setSearchQuery(dest || search || "");
+    setSelectedRegion("All");
+    setMaxBudget(25000);
+  }, [location.search]);
 
   // Filter logic
   const filteredDestinations = useMemo(() => {

@@ -5,13 +5,14 @@ import {
   Plus,
   ArrowRight,
   Trash2,
-  Edit
+  Edit,
+  Sparkles
 } from "lucide-react";
 import { useTrip } from "../context/TripContext";
 
 export default function MyTripsPage() {
   const navigate = useNavigate();
-  const { savedTrips, deleteSavedTrip, setCurrentPlan } = useTrip();
+  const { savedTrips, deleteSavedTrip, setCurrentPlan, loadTripIntoPlanner } = useTrip();
 
   const handleViewTrip = (trip) => {
     setCurrentPlan(trip);
@@ -20,7 +21,8 @@ export default function MyTripsPage() {
 
   const handleEditTrip = (trip) => {
     setCurrentPlan(trip);
-    navigate(`/planner?step=1`);
+    loadTripIntoPlanner(trip);
+    navigate("/planner?step=1");
   };
 
   return (

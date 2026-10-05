@@ -198,11 +198,17 @@ export default function Footer() {
             <span>for Indian travelers across Bharat.</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hover:underline cursor-pointer">Privacy Policy</span>
+            <Link to="/about#transparency" className="hover:underline cursor-pointer">
+              Privacy Policy
+            </Link>
             <span>•</span>
-            <span className="hover:underline cursor-pointer">Terms of Service</span>
+            <Link to="/about#budget-philosophy" className="hover:underline cursor-pointer">
+              Terms of Service
+            </Link>
             <span>•</span>
-            <span className="hover:underline cursor-pointer">FastAPI Backend Ready</span>
+            <Link to="/about#backend-architecture" className="hover:underline cursor-pointer">
+              FastAPI Backend Ready
+            </Link>
           </div>
         </div>
 

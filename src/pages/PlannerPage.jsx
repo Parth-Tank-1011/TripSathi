@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   MapPin,
   Compass,
@@ -64,7 +64,7 @@ const GENERATION_STEPS = [
 
 export default function PlannerPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const {
     plannerForm,
     updatePlannerForm,
@@ -74,8 +74,16 @@ export default function PlannerPage() {
   } = useTrip();
 
   // Multi-step: 1 = Details, 2 = Preferences, 3 = Budget, 4 = Generating
-  const initialStep = Number(searchParams.get("step")) || 1;
+  const initialStep = Number(new URLSearchParams(location.search).get("step")) || 1;
   const [currentStep, setCurrentStep] = useState(initialStep);
+
+  // Re-read ?step= whenever the URL changes so every entry point
+  // (Navbar "Plan a Trip", hero form, "Edit Trip", "Recalculate") lands on
+  // the correct step even though the route itself does not remount.
+  useEffect(() => {
+    const step = Number(new URLSearchParams(location.search).get("step"));
+    setCurrentStep(step >= 1 && step <= 3 ? step : 1);
+  }, [location.search]);
 
   // Form local state synced with context
   const [startingLocation, setStartingLocation] = useState(plannerForm.startingLocation || "Rajkot");

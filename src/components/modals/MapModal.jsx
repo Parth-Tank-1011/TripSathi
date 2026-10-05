@@ -1,8 +1,13 @@
-import React, { useState } from "react";
-import { X, MapPin, Navigation, Compass, Layers, Info } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Compass } from "lucide-react";
 
 export default function MapModal({ isOpen, onClose, day, destinationName = "Goa" }) {
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
+  const [mapLayer, setMapLayer] = useState("road");
+
+  useEffect(() => {
+    if (isOpen) setSelectedStopIndex(0);
+  }, [isOpen, day]);
 
   if (!isOpen || !day) return null;
 
@@ -10,7 +15,10 @@ export default function MapModal({ isOpen, onClose, day, destinationName = "Goa"
   const selectedStop = stops[selectedStopIndex] || stops[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+    >
       <div
         className="bg-white rounded-3xl max-w-4xl w-full h-[85vh] max-h-[750px] shadow-2xl border border-stone-200 overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -116,12 +124,32 @@ export default function MapModal({ isOpen, onClose, day, destinationName = "Goa"
             <div className="relative z-10 flex items-center justify-between">
               <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-bold text-slate-800 shadow-sm flex items-center gap-2">
                 <Compass className="w-4 h-4 text-teal-600 animate-spin-slow" />
-                <span>Simulated GPS Route: {destinationName}</span>
+                <span>Simulated GPS Route: {destinationName} • {mapLayer === "road" ? "Road View" : "Satellite"}</span>
               </div>
 
               <div className="bg-white/90 backdrop-blur-md p-1 rounded-xl border border-stone-200 shadow-sm flex gap-1 text-xs">
-                <button className="px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 font-bold">Road View</button>
-                <button className="px-2.5 py-1 rounded-lg text-stone-600 hover:text-slate-900">Satellite</button>
+                <button
+                  type="button"
+                  onClick={() => setMapLayer("road")}
+                  className={`px-2.5 py-1 rounded-lg transition-colors ${
+                    mapLayer === "road"
+                      ? "bg-teal-50 text-teal-800 font-bold"
+                      : "text-stone-600 hover:text-slate-900"
+                  }`}
+                >
+                  Road View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapLayer("satellite")}
+                  className={`px-2.5 py-1 rounded-lg transition-colors ${
+                    mapLayer === "satellite"
+                      ? "bg-teal-50 text-teal-800 font-bold"
+                      : "text-stone-600 hover:text-slate-900"
+                  }`}
+                >
+                  Satellite
+                </button>
               </div>
             </div>
 

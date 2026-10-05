@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Calendar,
@@ -27,7 +27,8 @@ import MapModal from "../components/modals/MapModal";
 
 export default function TripDetailsPage() {
   const { id } = useParams();
-  const { savedTrips, updateSavedTrip } = useTrip();
+  const navigate = useNavigate();
+  const { savedTrips, updateSavedTrip, setCurrentPlan, loadTripIntoPlanner } = useTrip();
 
   // Find trip
   const trip = savedTrips.find((t) => t.id === id) || savedTrips[0];
@@ -73,6 +74,13 @@ export default function TripDetailsPage() {
     });
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 3000);
+  };
+
+  // Load this trip's data into the planner so "Edit Trip" continues this trip.
+  const handleEditTrip = () => {
+    setCurrentPlan(trip);
+    loadTripIntoPlanner(trip);
+    navigate("/planner?step=1");
   };
 
   const handleDownloadItinerary = () => {
@@ -153,13 +161,14 @@ export default function TripDetailsPage() {
             <span>{saveToast ? "Saved Changes!" : "Save Changes"}</span>
           </button>
 
-          <Link
-            to="/planner?step=1"
+          <button
+            type="button"
+            onClick={handleEditTrip}
             className="px-4 py-2 border border-stone-200 hover:bg-stone-50 text-slate-800 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all"
           >
             <Edit3 className="w-3.5 h-3.5 text-stone-500" />
             <span>Edit Trip</span>
-          </Link>
+          </button>
 
           <button
             type="button"

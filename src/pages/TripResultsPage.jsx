@@ -23,7 +23,7 @@ import MapModal from "../components/modals/MapModal";
 import { ACCOMMODATIONS, RESTAURANTS, TRANSPORTATION_OPTIONS, BUDGET_SAVING_TIPS } from "../data/mockData";
 
 export default function TripResultsPage() {
-  const { currentPlan, saveActivePlanToTrips, updateSavedTrip } = useTrip();
+  const { currentPlan, saveActivePlanToTrips, updateCurrentPlan } = useTrip();
 
   // Modals state
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -77,9 +77,7 @@ export default function TripResultsPage() {
       return day;
     });
 
-    if (plan.id) {
-      updateSavedTrip(plan.id, { itinerary: updatedItinerary });
-    }
+    updateCurrentPlan({ itinerary: updatedItinerary });
   };
 
   const handleDeleteActivity = (actId) => {
@@ -88,9 +86,7 @@ export default function TripResultsPage() {
       activities: (day.activities || []).filter((a) => a.id !== actId)
     }));
 
-    if (plan.id) {
-      updateSavedTrip(plan.id, { itinerary: updatedItinerary });
-    }
+    updateCurrentPlan({ itinerary: updatedItinerary });
   };
 
   return (

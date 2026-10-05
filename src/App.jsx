@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { TripProvider } from "./context/TripContext";
 import Navbar from "./components/Navbar";
@@ -19,9 +19,9 @@ import AboutPage from "./pages/AboutPage";
 
 export default function App() {
   return (
-    <AuthProvider>
-      <TripProvider>
-        <Router>
+    <Router>
+      <AuthProvider>
+        <TripProvider>
           <ScrollToTop />
           <div className="flex flex-col min-h-screen bg-[#FDFBF7] text-slate-800 font-sans selection:bg-teal-500 selection:text-white">
             <Navbar />
@@ -35,13 +35,14 @@ export default function App() {
                 <Route path="/my-trips/:id" element={<TripDetailsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/about" element={<AboutPage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
             <Footer />
             <AuthModal />
           </div>
-        </Router>
-      </TripProvider>
-    </AuthProvider>
+        </TripProvider>
+      </AuthProvider>
+    </Router>
   );
 }

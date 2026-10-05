@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import confetti from "canvas-confetti";
 import {
   Sparkles,
   MapPin,
@@ -22,26 +23,51 @@ import DestinationCard from "../components/DestinationCard";
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { plannerForm, updatePlannerForm } = useTrip();
+  const { plannerForm, updatePlannerForm, executeTripGeneration, isGenerating } = useTrip();
 
   // Floating planner card form state
-  const [fromCity, setFromCity] = useState(plannerForm.startingLocation || "Rajkot");
-  const [toCity, setToCity] = useState(plannerForm.destination || "Goa");
-  const [days, setDays] = useState(plannerForm.days || 5);
-  const [travelers, setTravelers] = useState(plannerForm.travelers || 2);
-  const [budget, setBudget] = useState(plannerForm.totalBudget || 20000);
+  const [fromCity, setFromCity] = useState(plannerForm.startingLocation || "");
+  const [toCity, setToCity] = useState(plannerForm.destination || "");
+  const [days, setDays] = useState(plannerForm.days ? `${plannerForm.days} days` : "");
+  const [travelers, setTravelers] = useState(plannerForm.travelers ? `${plannerForm.travelers} travelers` : "");
+  const [budget, setBudget] = useState(plannerForm.totalBudget ? `₹${plannerForm.totalBudget.toLocaleString("en-IN")}` : "");
 
   const handleHeroSubmit = (e) => {
     e.preventDefault();
-    updatePlannerForm({
-      startingLocation: fromCity,
-      destination: toCity,
-      days: Number(days),
-      travelers: Number(travelers),
-      totalBudget: Number(budget)
+    if (isGenerating) return;
+
+    // Validate & normalize the planner inputs into ranges the planner supports.
+    const parsedFrom = fromCity.trim() || "Rajkot";
+    const parsedTo = toCity.trim() || "Goa";
+    const rawDays = parseInt(String(days).replace(/\D/g, ""), 10);
+    const rawTravelers = parseInt(String(travelers).replace(/\D/g, ""), 10);
+    const rawBudget = parseInt(String(budget).replace(/\D/g, ""), 10);
+
+    const parsedDays = Math.min(10, Math.max(2, Number.isFinite(rawDays) ? rawDays : 5));
+    const parsedTravelers = Math.min(4, Math.max(1, Number.isFinite(rawTravelers) ? rawTravelers : 2));
+    const parsedBudget = Math.max(8000, Number.isFinite(rawBudget) ? rawBudget : 20000);
+
+    const heroForm = {
+      startingLocation: parsedFrom,
+      destination: parsedTo,
+      days: parsedDays,
+      travelers: parsedTravelers,
+      totalBudget: parsedBudget
+    };
+
+    updatePlannerForm(heroForm);
+
+    // Build the itinerary (local mock engine stands in for the FastAPI backend)
+    // then hand off to the results page.
+    executeTripGeneration({ ...plannerForm, ...heroForm }, () => {
+      try {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      } catch (err) {
+        console.log("Confetti trigger", err);
+      }
+
+      navigate("/results");
     });
-    // Trigger animated generation right away or navigate to planner
-    navigate("/planner?step=2");
   };
 
   // Six featured destinations matching prompt
@@ -50,57 +76,51 @@ export default function LandingPage() {
   );
 
   return (
-    <div className="space-y-20 pb-20">
+    <div className="space-y-16 pb-20">
       
       {/* HERO SECTION */}
-      <section className="relative min-h-[640px] md:min-h-[720px] rounded-b-[40px] md:rounded-b-[56px] overflow-hidden flex flex-col justify-between pt-12 md:pt-18 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="relative rounded-b-[36px] md:rounded-b-[48px] overflow-hidden pt-8 md:pt-12 pb-12 md:pb-14 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-teal-50/90 via-emerald-50/40 to-stone-100/70 border-b border-stone-200/80 shadow-xs">
         
-        {/* Background Image & Gradient Overlays */}
-        <div className="absolute inset-0 -z-10 bg-slate-900">
-          <img
-            src="https://images.unsplash.com/photo-1506461883276-594a12b11cf3?q=80&w=2000&auto=format&fit=crop"
-            alt="Incredible India Travel"
-            className="w-full h-full object-cover opacity-50 scale-105 animate-pulse-subtle"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-900/40" />
-          <div className="absolute inset-0 bg-radial-at-c from-transparent via-slate-950/30 to-slate-950/80" />
-        </div>
+        {/* Background Subtle Gradient & Ambient Glows */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-r from-teal-200/25 via-emerald-200/20 to-amber-200/25 blur-3xl -z-10 pointer-events-none rounded-full" />
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-teal-300/15 blur-3xl -z-10 pointer-events-none rounded-full" />
+        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-emerald-300/15 blur-3xl -z-10 pointer-events-none rounded-full" />
 
         {/* Hero Content */}
-        <div className="max-w-4xl mx-auto text-center space-y-6 pt-4">
+        <div className="max-w-4xl mx-auto text-center space-y-4 pt-1">
           
           {/* Trust Badge Line */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs md:text-sm font-semibold shadow-lg">
-            <Sparkles className="w-4 h-4 text-amber-300" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-100/80 border border-teal-200/90 text-teal-950 text-xs md:text-sm font-bold shadow-xs">
+            <Sparkles className="w-4 h-4 text-amber-500" />
             <span>Smart planning • Budget friendly • Personalized itineraries</span>
           </div>
 
           {/* Heading */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] drop-shadow-md">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
             Your Dream Trip, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-emerald-200 to-amber-300">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 via-emerald-600 to-amber-500">
               Within Your Budget.
             </span>
           </h1>
 
           {/* Subheading */}
-          <p className="text-base sm:text-lg md:text-xl text-stone-200 font-normal max-w-2xl mx-auto leading-relaxed drop-shadow-xs">
+          <p className="text-base sm:text-lg text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
             Plan personalized trips across India with smart itineraries, affordable stays, local food, and budget-friendly travel options.
           </p>
 
           {/* Hero CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
             <Link
               to="/planner"
-              className="px-8 py-3.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-extrabold text-base transition-all duration-200 shadow-lg shadow-teal-500/25 flex items-center gap-2 active:scale-95"
+              className="px-7 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-extrabold text-sm sm:text-base transition-all shadow-md shadow-teal-600/20 flex items-center gap-2 active:scale-95"
             >
               <span>Plan My Trip</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
 
             <Link
               to="/explore"
-              className="px-7 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-base backdrop-blur-md border border-white/20 transition-all duration-200"
+              className="px-6 py-3 rounded-xl bg-white hover:bg-stone-50 text-slate-800 font-bold text-sm sm:text-base border border-stone-300 shadow-xs transition-all active:scale-95"
             >
               Explore Destinations
             </Link>
@@ -108,133 +128,164 @@ export default function LandingPage() {
         </div>
 
         {/* FLOATING TRIP PLANNER CARD */}
-        <div className="max-w-5xl mx-auto w-full mt-10 md:mt-14">
+        <div className="max-w-5xl mx-auto w-full mt-6 md:mt-8">
           <form
             onSubmit={handleHeroSubmit}
-            className="bg-white/95 backdrop-blur-xl p-5 md:p-7 rounded-3xl md:rounded-4xl shadow-2xl border border-white/60 text-slate-800 space-y-4"
+            className="bg-white p-5 md:p-6 rounded-3xl shadow-xl border border-stone-200/90 text-slate-800 space-y-4"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-ping" />
-                <span className="text-xs font-bold uppercase tracking-wider text-teal-800">
-                  Quick Trip Configurator
+                <span className="text-xs font-black uppercase tracking-wider text-slate-900">
+                  Trip Planner
                 </span>
               </div>
-              <span className="text-xs font-semibold text-stone-400">
-                Tailored for Indian budgets
+              <span className="text-xs font-semibold text-stone-500">
+                Smart India Itinerary Builder
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 items-end">
               
               {/* From */}
-              <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 hover:border-teal-400 focus-within:border-teal-500 focus-within:bg-white transition-all">
-                <label className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 flex items-center gap-1 block">
-                  <MapPin className="w-3 h-3 text-teal-600" />
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                   <span>From</span>
                 </label>
-                <select
+                <input
+                  type="text"
                   value={fromCity}
                   onChange={(e) => setFromCity(e.target.value)}
-                  className="w-full bg-transparent font-extrabold text-slate-900 text-sm focus:outline-hidden mt-1 cursor-pointer"
-                >
-                  {POPULAR_ORIGIN_CITIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  placeholder="Starting location"
+                  list="hero-origin-cities"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-stone-50/70 hover:border-stone-400 focus:border-teal-600 focus:bg-white focus:outline-hidden text-slate-900 font-bold text-sm placeholder:text-stone-400 shadow-2xs transition-all"
+                />
               </div>
 
               {/* To */}
-              <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 hover:border-teal-400 focus-within:border-teal-500 focus-within:bg-white transition-all">
-                <label className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 flex items-center gap-1 block">
-                  <Compass className="w-3 h-3 text-teal-600" />
-                  <span>To Destination</span>
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                  <span>To</span>
                 </label>
-                <select
+                <input
+                  type="text"
                   value={toCity}
                   onChange={(e) => setToCity(e.target.value)}
-                  className="w-full bg-transparent font-extrabold text-slate-900 text-sm focus:outline-hidden mt-1 cursor-pointer"
-                >
-                  {DESTINATIONS.map((d) => (
-                    <option key={d.id} value={d.name}>{d.name} ({d.state})</option>
-                  ))}
-                </select>
+                  placeholder="Where do you want to go?"
+                  list="hero-destinations"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-stone-50/70 hover:border-stone-400 focus:border-teal-600 focus:bg-white focus:outline-hidden text-slate-900 font-bold text-sm placeholder:text-stone-400 shadow-2xs transition-all"
+                />
               </div>
 
               {/* Number of Days */}
-              <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 hover:border-teal-400 focus-within:border-teal-500 focus-within:bg-white transition-all">
-                <label className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 flex items-center gap-1 block">
-                  <Calendar className="w-3 h-3 text-teal-600" />
-                  <span>Duration</span>
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                  <span>Number of Days</span>
                 </label>
-                <select
+                <input
+                  type="text"
                   value={days}
-                  onChange={(e) => setDays(Number(e.target.value))}
-                  className="w-full bg-transparent font-extrabold text-slate-900 text-sm focus:outline-hidden mt-1 cursor-pointer"
-                >
-                  <option value={3}>3 Days (Weekend)</option>
-                  <option value={4}>4 Days (Short Getaway)</option>
-                  <option value={5}>5 Days (Optimal)</option>
-                  <option value={7}>7 Days (Full Week)</option>
-                  <option value={10}>10 Days (Grand Tour)</option>
-                </select>
+                  onChange={(e) => setDays(e.target.value)}
+                  placeholder="e.g. 5 days"
+                  list="hero-days"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-stone-50/70 hover:border-stone-400 focus:border-teal-600 focus:bg-white focus:outline-hidden text-slate-900 font-bold text-sm placeholder:text-stone-400 shadow-2xs transition-all"
+                />
               </div>
 
               {/* Travelers */}
-              <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 hover:border-teal-400 focus-within:border-teal-500 focus-within:bg-white transition-all">
-                <label className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 flex items-center gap-1 block">
-                  <Users className="w-3 h-3 text-teal-600" />
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                   <span>Travelers</span>
                 </label>
-                <select
+                <input
+                  type="text"
                   value={travelers}
-                  onChange={(e) => setTravelers(Number(e.target.value))}
-                  className="w-full bg-transparent font-extrabold text-slate-900 text-sm focus:outline-hidden mt-1 cursor-pointer"
-                >
-                  <option value={1}>1 Solo Explorer</option>
-                  <option value={2}>2 Travelers (Couple/Friends)</option>
-                  <option value={3}>3 Travelers (Squad)</option>
-                  <option value={4}>4 Travelers (Group)</option>
-                  <option value={6}>6 Travelers (Family)</option>
-                </select>
+                  onChange={(e) => setTravelers(e.target.value)}
+                  placeholder="2 travelers"
+                  list="hero-travelers"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-stone-50/70 hover:border-stone-400 focus:border-teal-600 focus:bg-white focus:outline-hidden text-slate-900 font-bold text-sm placeholder:text-stone-400 shadow-2xs transition-all"
+                />
               </div>
 
               {/* Budget */}
-              <div className="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/80 hover:border-teal-400 focus-within:border-teal-500 focus-within:bg-white transition-all">
-                <label className="text-[10px] font-extrabold uppercase tracking-wider text-teal-900 flex items-center gap-1 block">
-                  <Wallet className="w-3 h-3 text-teal-700" />
-                  <span>Total Budget</span>
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <Wallet className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                  <span>Budget</span>
                 </label>
-                <div className="flex items-center text-teal-950 font-extrabold text-base mt-1">
-                  <span>₹</span>
-                  <input
-                    type="number"
-                    step="1000"
-                    min="5000"
-                    max="200000"
-                    value={budget}
-                    onChange={(e) => setBudget(Number(e.target.value))}
-                    className="w-full bg-transparent font-black text-slate-900 text-sm focus:outline-hidden pl-1"
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  placeholder="₹20,000"
+                  list="hero-budget"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-teal-50/40 hover:border-stone-400 focus:border-teal-600 focus:bg-white focus:outline-hidden text-slate-900 font-bold text-sm placeholder:text-stone-400 shadow-2xs transition-all"
+                />
+              </div>
+
+              {/* Primary Submit Button */}
+              <div className="sm:col-span-2 md:col-span-1 lg:col-span-1">
+                <button
+                  type="submit"
+                  disabled={isGenerating}
+                  aria-busy={isGenerating}
+                  className="w-full h-[42px] bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-extrabold text-sm rounded-xl shadow-md shadow-teal-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>{isGenerating ? "Creating Your Trip..." : "Create My Trip"}</span>
+                </button>
               </div>
 
             </div>
 
-            {/* Bottom CTA Row */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-              <div className="flex items-center gap-2 text-xs text-stone-500">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            {/* Datalists for native browser suggestions */}
+            <datalist id="hero-origin-cities">
+              {POPULAR_ORIGIN_CITIES.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+
+            <datalist id="hero-destinations">
+              {DESTINATIONS.map((d) => (
+                <option key={d.id} value={d.name} />
+              ))}
+            </datalist>
+
+            <datalist id="hero-days">
+              <option value="3 days" />
+              <option value="5 days" />
+              <option value="7 days" />
+              <option value="10 days" />
+            </datalist>
+
+            <datalist id="hero-travelers">
+              <option value="1 traveler" />
+              <option value="2 travelers" />
+              <option value="4 travelers" />
+              <option value="6 travelers" />
+            </datalist>
+
+            <datalist id="hero-budget">
+              <option value="₹10,000" />
+              <option value="₹20,000" />
+              <option value="₹35,000" />
+              <option value="₹50,000" />
+            </datalist>
+
+            {/* Bottom Trust Line */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-stone-100 text-xs text-stone-500">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>Transparent IRCTC train rates, local stays, and street food prices</span>
               </div>
-
-              <button
-                type="submit"
-                className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold text-sm rounded-xl shadow-md shadow-teal-600/25 flex items-center justify-center gap-2 transition-all active:scale-95"
-              >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>Create My Trip</span>
-              </button>
+              <div className="flex items-center gap-3 text-[11px] font-bold text-teal-800">
+                <span>✓ Instant Itinerary</span>
+                <span>✓ 100% Free</span>
+              </div>
             </div>
           </form>
         </div>
